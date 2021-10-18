@@ -1,33 +1,31 @@
-const express = require('express')
-const app = express()
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
 
-app.use(express.urlencoded({ extended: true }))
-app.use(express.json())
+import api from './api.js';
 
-// These will be provided to you
-const BOUNCE_API_ENDPOINT = 'TODO';
-const BOUNCE_BEARER_TOKEN = 'TODO';
+dotenv.config()
 
-// GET
-app.get('/users', function (req, res) {
-    return res.status(200).send('[GET] - Get all users');
-});
+const PORT = process.env.PORT || 8585;
+const app = express();
 
-// POST
-app.post('/users', function (req, res) {
-    return res.status(200).send('[POST] - Create user');
-});
+app
+    .use(express.json())
+    .use(express.urlencoded({ extended: true }))
 
-// PUT :uid
-app.put('/users/:uid', function (req, res) {
-    return res.status(200).send('[PUT] - Update specific user');
-});
+    .use(cors())
+    // api versioning;
+    .use('/api/v1', api)
+    .use('*', (_, res) => res.status(400).json({ error: 'Sorry we cant find that resource' }))
+    .use((err, req, res, next) => res.status(err.status || 422).json({ error: err.message || 'Sorry we couldnt process that request' }))
 
-// DELETE :uid 
-app.delete('/users/:uid', function (req, res) {
-    return res.status(200).send('[DELETE] - Delete user by uid');
-});
+    .listen(PORT, () => {
+        if (process.env.NODE_ENV === 'development') {
+            /* eslint no-console: 0 */
+            console.log(`The Dev server is running on port ${PORT}`);
+        } else {
+            console.log(`The production server is now running at ${PORT}`);
+        }
+    });
 
-app.listen(3000, function () {
-    console.log('Bounce coding-challenge-backend running on port 3000');
-})
+export default app;
